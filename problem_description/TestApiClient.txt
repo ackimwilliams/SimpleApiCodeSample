@@ -1,0 +1,66 @@
+Test API client
+
+The "Test API" is a very simple HTTP REST API fronting a key value store. The goal of this exercise is to write a client that takes in a simple input file of commands and parameters, and executes the analagous commands against the Test API.
+
+The "API documentation" for the Test API is available here. There are two versions of the API, one with authentication (v2) and one without (v1). You should either write a client that works with both versions; or two clients, one for each version.
+
+Your task
+
+You should write a program that takes as input simple line-based text files where the first word is a command (one of "get", "set", "delete", or "list" for v1; and also "auth" for v2) and any following words are parameters, and print output to stdout as appropriate for the command. Specifically:
+
+Command: get; parameter "key"; example: get key. Output: value; example: value
+Command: set; parameters "key" and "value"; example: set key value. Output: ok or fail
+Command: delete; parameter "key"; example: delete key. Output: ok or fail
+Command: list; no parameters; example: list. Output: one value per line.
+Command: auth; parameters "user" and "pass"; example: auth user pass. Output: ok or fail.
+Here is an example input file for the v1 API:
+
+set foo bar
+get foo
+set baz bat
+list
+delete foo
+get baz
+Output would look like:
+
+ok
+bar
+ok
+baz foo
+ok
+bat
+Don't worry if there are other keys present in the output of the "list" command.
+
+Here is an example input file for the v2 API:
+
+auth test testpw
+set foo bar
+get foo
+set baz bat
+list
+delete foo
+get baz
+Output should look exactly the same as the v1 output, except for an additional "ok" from the auth command:
+
+ok
+ok
+bar
+ok
+baz foo
+ok
+bat
+You can use the following credentials for talking to the v2 API:
+
+Username: test
+Password: testpw
+If your client encounters an error talking to the Hosting API server, it should report the error like error [code] [msg]. For example, given the following input to the v1 API:
+
+delete foo
+get foo
+The output should look like:
+
+ok
+error 404 unknown key foo
+
+
+Use either a command line argument or a pipe to read in the input file -- just document which it is.

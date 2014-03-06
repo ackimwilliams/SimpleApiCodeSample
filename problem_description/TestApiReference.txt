@@ -1,0 +1,89 @@
+======================================================================
+The "Test API"
+======================================================================
+The "Test API" is a very simple HTTP REST API fronting a key-value
+store.  
+
+The API root is simply the hostname of the API server, e.g.,
+http://website.connect.net.
+
+There are two "API versions" exposed at two different URIs relative to
+the root: /v1 and /v2.  In both /v2 and /v1, responses are in a JSON
+format.  HTTP response codes are used for error reporting, and all
+JSON responses include a "status" field taking on either "ok" or
+"fail" as values, with an optional "msg" field describing the result,
+in addition to other fields depending on the endpoint that was called.
+
+/v1 API
+----------------------------------------------------------------------
+The /v1 API is a very basic key/value store with no notion of users,
+namespaces, etc (i.e., keys are global).  It supports the following
+operations:
+
+* GET /v1/key?key=$key -- get the value if any for the given key
+* PUT /v1/key?key=$key&value=$value -- set the value for the key
+* DELETE /v1/key?key=$key -- delete the key
+* GET /v1/list -- list all known keys
+
+Some examples:
+
+GET /v1/list
+HTTP/1.1 200 OK
+{"status": "ok", "keys": []}
+
+PUT /v1/key?key=mykey&value=myvalue
+HTTP/1.1 200 OK
+{"status": "ok"}
+
+GET /v1/list
+HTTP/1.1 200 OK
+{"status": "ok", "keys": ["mykey"]}
+
+GET /v1/key?key=mykey
+HTTP/1.1 200 OK
+{"status": "ok", "mykey": "myvalue"}
+
+DELETE /v1/key?key=mykey
+HTTP/1.1 200 OK
+{"status": "ok"}
+
+GET /v1/key?key=mykey
+HTTP/1.1 404 Not Found
+{"status": "fail", "msg": "unknown key mykey"}
+
+/v2 API
+----------------------------------------------------------------------
+The /v2 API exposes the same functionality as the /v1 API, but
+requires authentication, and has different keyspaces per user.
+Authentication is done against a special /v2/auth endpoint, which
+returns a token.  This token must then be passed to all other
+endpoints.  The token expires after some time (5min by default).  The
+full set of endpoints for the /v2 API is:
+
+* GET /v2/auth?user=$user&pass=$pass -- get token for the user
+* GET /v2/key?token=$token&key=$key -- get value for key
+* PUT /v2/key?token=$token&key=$key&value=$value -- set value for key
+* DELETE /v2/key?token=$token&key=$key -- delete key
+* GET /v2/list?token=$token -- list all keys for user
+
+If a request to /v2/auth is made with invalid credentials, a 401 
+Unauthorized response code is returned.
+
+Some examples:
+
+GET /v2/auth?user=xxx&pass=yyy
+HTTP/1.1 200 OK
+{"status": "ok", "token": "9166b6bc0c7baa92c8c4c3c7826b32cfeec00af7"}
+
+GET /v2/auth?user=bad&pass=wrong
+HTTP/1.1 401 Unauthorized
+{"status": "fail", "msg": "invalid login credentials"}
+
+GET /v2/list?token=9166b6bc0c7baa92c8c4c3c7826b32cfeec00af7
+HTTP/1.1 200 OK
+{"status": "ok", "keys": []}
+
+PUT /v2/key?token=9166b6bc0c7baa92c8c4c3c7826b32cfeec00af7&\
+  key=mykey&value=myvalue
+HTTP/1.1 200 OK
+{"status": "ok"}
